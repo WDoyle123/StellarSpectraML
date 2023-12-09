@@ -30,7 +30,7 @@ def main():
     y_encoded = encoder.fit_transform(y)
 
     # Splitting the dataset
-    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=220301)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.3, random_state=220301)
 
     # Scaling the features
     scaler = MinMaxScaler()
@@ -55,13 +55,33 @@ def main():
     scores = model.evaluate(X_test_scaled, y_test)
     print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
 
+    # Model accuracy value 
+    final_accuracy = scores[1]
+    
+    # Create a figure and an axes object
+    fig, ax = plt.subplots(figsize=(8, 8))
+
     # Plot training & validation accuracy values
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('Model accuracy')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Test'], loc='upper left')
+    ax.plot(history.history['accuracy'])
+    ax.plot(history.history['val_accuracy'])
+    ax.set_title('Model accuracy')
+    ax.set_ylabel('Accuracy')
+    ax.set_xlabel('Epoch')
+    ax.legend(['Train', 'Test'], loc='lower right')
+
+    # Add a horizontal line for the final accuracy
+    ax.axhline(y=final_accuracy, color='r', linestyle='--')
+
+    # Add an annotation
+    ax.annotate(f'Final Accuracy: {final_accuracy:.2f}%', 
+                 xy=(len(history.history['accuracy'])-1, final_accuracy), 
+                 xytext=(len(history.history['accuracy'])/2, final_accuracy+5),
+                 arrowprops=dict(facecolor='black', shrink=0.05),
+                 horizontalalignment='right', verticalalignment='top')
+
+    # Save the plot
+    plt.savefig('../model_accuracy_plot.png', dpi=300)
+
     plt.show()
 
 if __name__ == "__main__":
