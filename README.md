@@ -59,6 +59,8 @@ python main.py
 ## Output
 After running `main.py`, the script will output the model's accuracy and save a plot of the training and validation accuracy over epochs as `model_accuracy_plot.png`.
 
+![model_accuracy_plot.png](model_accuracy_plot.png)
+
 ## Acknowledgements
 
 [Yale Bright Star Catalogue](https://heasarc.gsfc.nasa.gov/db-perl/W3Browse/w3table.pl?tablehead=name%3Dbsc5p&Action=More+Options)
