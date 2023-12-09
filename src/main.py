@@ -11,43 +11,48 @@ from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.layers import Dropout
 
-from data_handler import get_data_frame
+from data_handler import combined_data_frame
 
 def main():
+    
+    # Get data frame
+    df = combined_data_frame()
+    
+    # Get rid of rows where bv_color or vmag are NaN
+    df = df.dropna(subset=['bv_color', 'vmag'])
 
-    df = get_data_frame('ysb_data.csv')
-    df = df.dropna(subset=['bv_color', 'ri_code', 'ri_color', 'spect_code', 'ub_color'])
+    # Create x y variables
+    X = df[['vmag', 'bv_color']]
+    y = df['spectral_type']
 
-    X = df[['vmag', 'bv_color', 'ri_color', 'ub_color']]
-    y = df['spect_code']
-
-    scaler = MinMaxScaler()
-    X_scaled = scaler.fit_transform(X)
-
-    # Encoding the target variable
+    # label encode spectral type
     encoder = LabelEncoder()
-    encoded_Y = encoder.fit_transform(y)
-    y_one_hot = to_categorical(encoded_Y)
+    y_encoded = encoder.fit_transform(y)
 
     # Splitting the dataset
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y_one_hot, test_size=0.2, random_state=220301)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=220301)
 
-    # Create model
+    # Scaling the features
+    scaler = MinMaxScaler()
+    X_train_scaled = scaler.fit_transform(X_train)  
+    X_test_scaled = scaler.transform(X_test)        
+
+    # Model ~ 80% accurate
     model = Sequential()
-    model.add(Dense(64, activation='relu', input_dim=4))
-    model.add(Dropout(0.5))
+    model.add(Dense(64, activation='relu', input_dim=2))
+    model.add(Dropout(0.1))
     model.add(Dense(32, activation='relu'))
-    model.add(Dropout(0.5))
-    model.add(Dense(y_one_hot.shape[1], activation='softmax'))
-
+    model.add(Dropout(0.1))
+    model.add(Dense(10, activation='softmax'))
+    
     optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
-    model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+    model.compile(loss='sparse_categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
     # Fit the model
-    history = model.fit(X_train, y_train, validation_data=(X_test, y_test), epochs=100, batch_size=256)
+    history = model.fit(X_train_scaled, y_train, validation_data=(X_test_scaled, y_test), epochs=200, batch_size=256)
 
     # Evaluate the model
-    scores = model.evaluate(X_test, y_test)
+    scores = model.evaluate(X_test_scaled, y_test)
     print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
 
     # Plot training & validation accuracy values
